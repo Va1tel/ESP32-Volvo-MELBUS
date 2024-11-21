@@ -74,3 +74,6 @@ extern "C" void app_main(void)
 ```
 This initialization was done based on the assumption that bluetooth event handlers and internal processes use core 0, therefore, core 1 is used to separate the main program.
 With this approach, HU manages to see the emulator, connect the phone to Bluetooth, and even switch tracks, but all this works until the music is playing. As soon as the music starts playing, the main logic of the emulator stops working - perhaps due to the fact that Bluetooth does not allow you to switch to the logic of the emulator.
+
+# Warning
+All actions that you do with your car, you do at your own risk. The author is not responsible for the breakage of your parts.
