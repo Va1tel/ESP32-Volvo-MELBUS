@@ -29,3 +29,48 @@ Since the ESP 32 has mediocre sound quality, the PCM5102A module operating under
 
 # Problems
 The main problem that blocks further development is the introduction of Bluetooth into the program. The [ESP32-A2DP](https://github.com/pschatzmann/ESP32-A2DP.git) library is used for Bluetooth.
+
+With simple bluetooth initialization using:
+```cpp
+#include "AudioTools.h"
+#include "BluetoothA2DPSink.h"
+
+AnalogAudioStream out;
+BluetoothA2DPSink a2dp_sink(out);
+
+void setup() {
+    a2dp_sink.start("MyMusic");
+}
+```
+With such initialization, if it is done before the main program and a delay after it, HU sees the emulator, but as soon as the phone is connected to ESP 32, the main logic stops being executed.
+
+Initialization on different cores:
+```cpp
+// Task of launching emulator CD-CHG
+void mainTask(void *pvParameters) {
+    loop(); //the basic logic of the emulator
+}
+
+// Main program
+extern "C" void app_main(void)
+{   
+    // Create task of launching emulator CD-CHG on core 1
+    xTaskCreatePinnedToCore(
+        mainTask,  // Task function
+        "MainTask", // Name function
+        8192, // Stack size for the main program
+        NULL,  // Parametrs of task
+        10,    // Priority of the main task
+        NULL, // Task handling
+        1     // Running on core 0
+    );
+
+    a2dp_sink.start("SwedenMetal");
+    while(true){
+        vTaskDelay(100/ portTICK_PERIOD_MS);
+    }
+
+}
+```
+This initialization was done based on the assumption that bluetooth event handlers and internal processes use core 0, therefore, core 1 is used to separate the main program.
+With this approach, HU manages to see the emulator, connect the phone to Bluetooth, and even switch tracks, but all this works until the music is playing. As soon as the music starts playing, the main logic of the emulator stops working - perhaps due to the fact that Bluetooth does not allow you to switch to the logic of the emulator.
